@@ -1,6 +1,7 @@
 import requests
 
-__version__ = '0.3.2'
+__version__ = '0.4.0'
+
 
 class Totango:
 
@@ -50,7 +51,7 @@ class Totango:
         r.raise_for_status()
         return r
 
-    def track(self, module, action, user_id=None, user_name=None, account_id=None, account_name=None, user_opts={}, account_opts={}):
+    def track(self, module, action, user_id=None, user_name=None, account_id=None, account_name=None, user_opts={}, account_opts={}, timestamp=None):
         user_id = user_id or self.user_id
         if user_id is None:
             raise NameError("user_id is required")
@@ -58,6 +59,8 @@ class Totango:
         payload = self._get_base_payload(user_id, user_name, account_id, account_name, user_opts, account_opts)
         payload['sdr_m'] = module
         payload['sdr_a'] = action
+        if timestamp is not None:
+            payload['sdr_ts'] = timestamp
 
         return self._post(payload)
 
