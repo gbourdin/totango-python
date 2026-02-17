@@ -2,24 +2,18 @@
 Changelog
 =========
 
-0.4.1 (2026-02-17)
------------------------------------------
-
-* Lowered support floor to Python 3.10+.
-* Added tox environments for Python 3.10 through 3.15.
-* Added a GitHub Actions matrix to run tests across supported Python versions.
-* Added coverage report generation in test jobs and Codecov upload integration.
-* Added tag-triggered release workflow to create GitHub Releases and publish to PyPI.
-* Updated Ruff and Ty target versions to enforce Python 3.10 compatibility.
-
 0.4.0 (2026-02-17)
 -----------------------------------------
 
+* Added official support for Python 3.10+ (through 3.15 in CI matrix validation).
+* Migrated packaging metadata to ``pyproject.toml`` with modern build configuration.
 * Added Python 3 compatibility fixes and typed public APIs.
 * Fixed payload construction for per-call ``user_id`` overrides.
-* Added integration tests covering payload shape and HTTP error handling.
-* Migrated packaging metadata to ``pyproject.toml``.
-* Added ``ruff`` and ``ty`` configuration for linting and type checks.
+* Added behavior-focused integration tests for payload generation and HTTP error handling.
+* Added ``ruff`` and ``ty`` configuration and aligned tooling to Python 3.10 compatibility.
+* Added ``tox`` environments for Python 3.10 through 3.15 plus lint/type checks.
+* Added GitHub Actions CI matrix, coverage report generation, and Codecov uploads.
+* Added tag-triggered release workflow to create GitHub Releases and publish to PyPI.
 
 0.3.2 (2017-06-1)
 -----------------------------------------
