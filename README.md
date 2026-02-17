@@ -10,7 +10,7 @@ Python client for Totango's HTTP tracking pixel API.
 ## Installation
 
 ```bash
-python -m pip install totango
+pip install totango
 ```
 
 From source:
@@ -18,7 +18,7 @@ From source:
 ```bash
 git clone git@github.com:gbourdin/totango-python.git
 cd totango-python
-python -m pip install -e .
+pip install -e .
 ```
 
 ## Quick Usage
