@@ -2,26 +2,14 @@
 totango-python
 ==============
 
+This project now maintains its primary documentation in ``README.md``.
 
-Totango (http://www.totango.com) Python Library
+Quick install::
 
-* Free software: Apache License, Version 2.0
+    python -m pip install totango
 
-
-Installation
-============
-
-::
-
-    pip install totango
-
-
-Usage
-=====
-
-::
+Quick usage::
 
     import totango
-
-    tt = totango.Totango('SP-XXXX-XX', 'user_id')
-    tt.track('module','action')
+    client = totango.Totango('SP-XXXX-XX', user_id='user-123')
+    client.track('module', 'action')

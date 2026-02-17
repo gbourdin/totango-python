@@ -2,6 +2,15 @@
 Changelog
 =========
 
+0.4.0 (2026-02-17)
+-----------------------------------------
+
+* Added Python 3 compatibility fixes and typed public APIs.
+* Fixed payload construction for per-call ``user_id`` overrides.
+* Added integration tests covering payload shape and HTTP error handling.
+* Migrated packaging metadata to ``pyproject.toml``.
+* Added ``ruff`` and ``ty`` configuration for linting and type checks.
+
 0.3.2 (2017-06-1)
 -----------------------------------------
 
