@@ -8,6 +8,7 @@ Changelog
 * Lowered support floor to Python 3.10+.
 * Added tox environments for Python 3.10 through 3.15.
 * Added a GitHub Actions matrix to run tests across supported Python versions.
+* Added coverage report generation in test jobs and Codecov upload integration.
 * Updated Ruff and Ty target versions to enforce Python 3.10 compatibility.
 
 0.4.0 (2026-02-17)
