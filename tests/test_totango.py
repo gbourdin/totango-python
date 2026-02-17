@@ -122,5 +122,81 @@ class TotangoBehaviorTests(unittest.TestCase):
                 client.send()
 
 
+class TotangoTrackerParityTests(unittest.TestCase):
+    def test_eu_region_uses_eu_endpoint(self) -> None:
+        tracker = totango.TotangoTracker("SP-123", "EU")
+        self.assertEqual(tracker.url, "https://api-eu1.totango.com/pixel.gif/")
+
+    def test_track_activity_maps_to_event_payload(self) -> None:
+        with _running_server() as (server, url):
+            tracker = totango.TotangoTracker("SP-123")
+            tracker.url = url
+
+            response = tracker.trackActivity("billing", "opened", "user@example.com", "Acme")
+
+        self.assertEqual(response.status_code, 200)
+        payload = server.requests_log[0]["form"]
+        self.assertEqual(payload["sdr_m"], "billing")
+        self.assertEqual(payload["sdr_a"], "opened")
+        self.assertEqual(payload["sdr_u"], "user@example.com")
+        self.assertEqual(payload["sdr_u.name"], "user@example.com")
+        self.assertEqual(payload["sdr_odn"], "Acme")
+
+    def test_api_token_sets_auth_headers(self) -> None:
+        with _running_server() as (server, url):
+            tracker = totango.TotangoTracker("SP-123", "US", "token-123")
+            tracker.url = url
+            tracker.trackActivity("billing", "opened", "user@example.com")
+
+        headers = server.requests_log[0]["headers"]
+        self.assertEqual(headers["Authorization"], "app-token token-123")
+        self.assertEqual(headers["X-API-Token"], "token-123")
+
+    def test_set_user_attributes(self) -> None:
+        with _running_server() as (server, url):
+            tracker = totango.TotangoTracker("SP-123")
+            tracker.url = url
+
+            tracker.setUserAttributes(
+                "user-1",
+                "Jane User",
+                {"plan": "enterprise", "role": "admin"},
+            )
+
+        payload = server.requests_log[0]["form"]
+        self.assertEqual(payload["sdr_u"], "user-1")
+        self.assertEqual(payload["sdr_u.name"], "Jane User")
+        self.assertEqual(payload["sdr_u.plan"], "enterprise")
+        self.assertEqual(payload["sdr_u.role"], "admin")
+
+    def test_set_attributes_splits_user_and_account_prefixes(self) -> None:
+        with _running_server() as (server, url):
+            tracker = totango.TotangoTracker("SP-123")
+            tracker.url = url
+
+            tracker.setAttributes(
+                "account-1",
+                "Acme",
+                "user-1",
+                "Jane User",
+                {
+                    "a.tier": "enterprise",
+                    "a.segment": "financial-services",
+                    "u.plan": "gold",
+                    "u.mrr": "1200",
+                },
+            )
+
+        payload = server.requests_log[0]["form"]
+        self.assertEqual(payload["sdr_o"], "account-1")
+        self.assertEqual(payload["sdr_odn"], "Acme")
+        self.assertEqual(payload["sdr_u"], "user-1")
+        self.assertEqual(payload["sdr_u.name"], "Jane User")
+        self.assertEqual(payload["sdr_o.tier"], "enterprise")
+        self.assertEqual(payload["sdr_o.segment"], "financial-services")
+        self.assertEqual(payload["sdr_u.plan"], "gold")
+        self.assertEqual(payload["sdr_u.mrr"], "1200")
+
+
 if __name__ == "__main__":
     unittest.main()
