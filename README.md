@@ -4,7 +4,7 @@ Python client for Totango's HTTP tracking pixel API.
 
 ## Requirements
 
-- Python 3.14+
+- Python 3.10+
 - `requests`
 
 ## Installation
@@ -43,15 +43,24 @@ client.send(account_opts={"tier": "enterprise"})
 
 ## Development
 
-Run tests:
+Run the default test suite:
 
 ```bash
 python -m unittest discover -s tests -v
 ```
 
-Lint and type-check (after installing `.[dev]`):
+Run lint and type checks:
 
 ```bash
 ruff check .
 ty check .
 ```
+
+Run the multi-version matrix with tox (3.10 through 3.15):
+
+```bash
+tox -e py310,py311,py312,py313,py314,py315
+tox -e lint,type
+```
+
+Continuous integration also runs this matrix in GitHub Actions on each push and pull request.
