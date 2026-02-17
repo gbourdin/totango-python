@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - master
-      - pass1-modernize
-      - pass2-parity
-      - pass3-api-coverage
   pull_request:
 
 jobs:
