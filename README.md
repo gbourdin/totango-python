@@ -21,12 +21,21 @@ cd totango-python
 python -m pip install -e .
 ```
 
+## Quick Usage
+
+```python
+import totango
+
+tt = totango.Totango("SP-XXXX-XX", user_id="user-123")
+tt.track("module", "action")
+```
+
 ## Usage
 
 ```python
 import totango
 
-client = totango.Totango(
+tt = totango.Totango(
     "SP-XXXX-XX",
     user_id="user-123",
     user_name="Jane User",
@@ -35,10 +44,10 @@ client = totango.Totango(
 )
 
 # Track an activity event
-client.track("dashboard", "opened", user_opts={"plan": "gold"})
+tt.track("dashboard", "opened", user_opts={"plan": "gold"})
 
 # Send an identify-style update without activity module/action
-client.send(account_opts={"tier": "enterprise"})
+tt.send(account_opts={"tier": "enterprise"})
 ```
 
 ## Development
