@@ -2,6 +2,14 @@
 Changelog
 =========
 
+0.5.0 (2026-02-17)
+-----------------------------------------
+
+* Added ``TotangoTracker`` with JS tracker-style methods.
+* Added US/EU region endpoint selection.
+* Added optional API token headers for tracker requests.
+* Added behavior tests for JS parity method mapping.
+
 0.4.0 (2026-02-17)
 -----------------------------------------
 

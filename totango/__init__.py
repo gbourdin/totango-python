@@ -6,10 +6,16 @@ from typing import Any
 import requests
 from requests import Response
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 UserAttributes = Mapping[str, Any]
 AccountAttributes = Mapping[str, Any]
+Attributes = Mapping[str, Any]
+
+REGION_ENDPOINTS = {
+    "US": "https://api.totango.com/pixel.gif/",
+    "EU": "https://api-eu1.totango.com/pixel.gif/",
+}
 
 
 class Totango:
@@ -68,11 +74,14 @@ class Totango:
 
         return payload
 
+    def _get_headers(self) -> dict[str, str]:
+        return {"User-Agent": f"python-totango/{__version__}"}
+
     def _post(self, payload: Mapping[str, Any]) -> Response:
         response = requests.post(
             self.url,
             data=payload,
-            headers={"User-Agent": f"python-totango/{__version__}"},
+            headers=self._get_headers(),
         )
         response.raise_for_status()
         return response
@@ -120,3 +129,136 @@ class Totango:
         )
 
         return self._post(payload)
+
+
+class TotangoTracker(Totango):
+    """Feature-compatible tracker API aligned with the JS totango-tracker package."""
+
+    def __init__(
+        self,
+        service_id: str,
+        region: str = "US",
+        api_token: str | None = None,
+    ) -> None:
+        super().__init__(service_id=service_id)
+        normalized_region = region.upper()
+        if normalized_region not in REGION_ENDPOINTS:
+            raise ValueError("region must be 'US' or 'EU'")
+
+        self.region = normalized_region
+        self.url = REGION_ENDPOINTS[normalized_region]
+        self.api_token = api_token
+
+    def _get_headers(self) -> dict[str, str]:
+        headers = super()._get_headers()
+        if self.api_token:
+            headers["Authorization"] = f"app-token {self.api_token}"
+            headers["X-API-Token"] = self.api_token
+        return headers
+
+    def trackActivity(
+        self,
+        module: str,
+        action: str,
+        userName: str,
+        accountName: str = "",
+    ) -> Response:
+        account_name = accountName or None
+        return self.track(
+            module=module,
+            action=action,
+            user_id=userName,
+            user_name=userName,
+            account_name=account_name,
+        )
+
+    def setUserAttributes(
+        self,
+        userId: str,
+        userName: str,
+        attributes: UserAttributes,
+    ) -> Response:
+        return self.send(
+            user_id=userId,
+            user_name=userName,
+            user_opts=attributes,
+        )
+
+    def setAccountAttributes(
+        self,
+        accountId: str,
+        accountName: str,
+        attributes: AccountAttributes,
+    ) -> Response:
+        user_id = self.user_id or accountId
+        user_name = self.user_name or user_id
+        return self.send(
+            user_id=user_id,
+            user_name=user_name,
+            account_id=accountId,
+            account_name=accountName,
+            account_opts=attributes,
+        )
+
+    def setAttributes(
+        self,
+        accountId: str,
+        accountName: str,
+        userId: str,
+        userName: str,
+        attributes: Attributes,
+    ) -> Response:
+        user_opts: dict[str, Any] = {}
+        account_opts: dict[str, Any] = {}
+
+        for key, value in attributes.items():
+            if key.startswith("a."):
+                account_opts[key[2:]] = value
+            elif key.startswith("u."):
+                user_opts[key[2:]] = value
+            else:
+                user_opts[key] = value
+
+        return self.send(
+            user_id=userId,
+            user_name=userName,
+            account_id=accountId,
+            account_name=accountName,
+            user_opts=user_opts,
+            account_opts=account_opts,
+        )
+
+    def track_activity(
+        self,
+        module: str,
+        action: str,
+        user_name: str,
+        account_name: str = "",
+    ) -> Response:
+        return self.trackActivity(module, action, user_name, account_name)
+
+    def set_user_attributes(
+        self,
+        user_id: str,
+        user_name: str,
+        attributes: UserAttributes,
+    ) -> Response:
+        return self.setUserAttributes(user_id, user_name, attributes)
+
+    def set_account_attributes(
+        self,
+        account_id: str,
+        account_name: str,
+        attributes: AccountAttributes,
+    ) -> Response:
+        return self.setAccountAttributes(account_id, account_name, attributes)
+
+    def set_attributes(
+        self,
+        account_id: str,
+        account_name: str,
+        user_id: str,
+        user_name: str,
+        attributes: Attributes,
+    ) -> Response:
+        return self.setAttributes(account_id, account_name, user_id, user_name, attributes)

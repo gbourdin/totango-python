@@ -56,6 +56,26 @@ tt.track("dashboard", "opened", user_opts={"plan": "gold"})
 tt.send(account_opts={"tier": "enterprise"})
 ```
 
+## JS-Style Tracker API
+
+`TotangoTracker` mirrors the JavaScript `totango-tracker` API shape.
+
+```python
+import totango
+
+tracker = totango.TotangoTracker("SP-XXXX-XX", "EU", "api-token-value")
+tracker.trackActivity("billing", "opened", "user@example.com", "Acme")
+tracker.setUserAttributes("user-1", "Jane User", {"plan": "enterprise"})
+tracker.setAccountAttributes("acct-1", "Acme", {"tier": "gold"})
+tracker.setAttributes(
+    "acct-1",
+    "Acme",
+    "user-1",
+    "Jane User",
+    {"a.segment": "saas", "u.plan": "enterprise"},
+)
+```
+
 ## Development
 
 Run the default test suite:
