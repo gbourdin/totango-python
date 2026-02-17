@@ -13,6 +13,8 @@ jobs:
   tests:
     name: Tests (${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
@@ -45,10 +47,10 @@ jobs:
         run: tox -e ${{ matrix.tox-env }}
 
       - name: Upload coverage to Codecov
-        if: ${{ secrets.CODECOV_TOKEN != '' }}
+        if: ${{ env.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@v5
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ env.CODECOV_TOKEN }}
           files: coverage.${{ matrix.tox-env }}.xml
           flags: ${{ matrix.tox-env }}
           fail_ci_if_error: true
