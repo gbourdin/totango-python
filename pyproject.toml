@@ -30,6 +30,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "ruff>=0.6.0",
+  "setuptools>=69",
   "ty>=0.0.1a15",
 ]
 
@@ -54,9 +55,6 @@ src = ["totango", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "A", "N"]
-
-[tool.ty]
-exclude = ["build", "dist", "totango.egg-info", ".worktrees"]
 
 [tool.ty.environment]
 python-version = "3.14"

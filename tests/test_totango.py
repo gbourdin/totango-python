@@ -4,11 +4,10 @@ import threading
 import unittest
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Any
+from typing import Any, cast
 from urllib.parse import parse_qs
 
 import requests
-
 import totango
 
 
@@ -19,11 +18,12 @@ class _RecordingHTTPServer(HTTPServer):
 
 class _RecordingHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802 (stdlib handler signature)
+        server = cast(_RecordingHTTPServer, self.server)
         content_length = int(self.headers.get("Content-Length", "0"))
         body = self.rfile.read(content_length).decode("utf-8")
         parsed = {key: values[0] for key, values in parse_qs(body, keep_blank_values=True).items()}
 
-        self.server.requests_log.append(
+        server.requests_log.append(
             {
                 "path": self.path,
                 "headers": {key: value for key, value in self.headers.items()},
@@ -31,13 +31,13 @@ class _RecordingHandler(BaseHTTPRequestHandler):
             }
         )
 
-        status_code = self.server.response_statuses.pop(0) if self.server.response_statuses else 200
+        status_code = server.response_statuses.pop(0) if server.response_statuses else 200
         self.send_response(status_code)
         self.send_header("Content-Type", "text/plain")
         self.end_headers()
         self.wfile.write(b"ok")
 
-    def log_message(self, _format: str, *_args: Any) -> None:  # noqa: A003
+    def log_message(self, format: str, *args: Any) -> None:  # noqa: A002
         return
 
 
