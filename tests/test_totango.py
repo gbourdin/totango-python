@@ -121,6 +121,37 @@ class TotangoBehaviorTests(unittest.TestCase):
             with self.assertRaises(requests.HTTPError):
                 client.send()
 
+    def test_send_supports_system_version_parameter(self) -> None:
+        with _running_server() as (server, url):
+            client = totango.Totango("SP-123", user_id="user-1")
+            client.url = url
+
+            client.send(system_version="web@1.2.3")
+
+        payload = server.requests_log[0]["form"]
+        self.assertEqual(payload["sdr_p"], "web@1.2.3")
+
+    def test_account_name_falls_back_to_account_identifier(self) -> None:
+        with _running_server() as (server, url):
+            client = totango.Totango("SP-123", user_id="user-1")
+            client.url = url
+
+            client.send(account_name="Acme")
+
+        payload = server.requests_log[0]["form"]
+        self.assertEqual(payload["sdr_o"], "Acme")
+        self.assertEqual(payload["sdr_odn"], "Acme")
+
+    def test_send_allows_raw_api_fields(self) -> None:
+        with _running_server() as (server, url):
+            client = totango.Totango("SP-123", user_id="user-1")
+            client.url = url
+
+            client.send(raw_opts={"sdr_custom": "custom-value"})
+
+        payload = server.requests_log[0]["form"]
+        self.assertEqual(payload["sdr_custom"], "custom-value")
+
 
 class TotangoTrackerParityTests(unittest.TestCase):
     def test_eu_region_uses_eu_endpoint(self) -> None:

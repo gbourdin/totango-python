@@ -6,11 +6,12 @@ from typing import Any
 import requests
 from requests import Response
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 UserAttributes = Mapping[str, Any]
 AccountAttributes = Mapping[str, Any]
 Attributes = Mapping[str, Any]
+RawAttributes = Mapping[str, Any]
 
 REGION_ENDPOINTS = {
     "US": "https://api.totango.com/pixel.gif/",
@@ -42,8 +43,10 @@ class Totango:
         user_name: str | None = None,
         account_id: str | None = None,
         account_name: str | None = None,
+        system_version: str | None = None,
         user_opts: UserAttributes | None = None,
         account_opts: AccountAttributes | None = None,
+        raw_opts: RawAttributes | None = None,
     ) -> dict[str, Any]:
         user_id = user_id or self.user_id
         if user_id is None:
@@ -58,19 +61,24 @@ class Totango:
         if user_name is not None:
             payload["sdr_u.name"] = user_name
 
-        account_id = account_id or self.account_id
+        account_name = account_name or self.account_name
+        account_id = account_id or self.account_id or account_name
         if account_id is not None:
             payload["sdr_o"] = account_id
 
-        account_name = account_name or self.account_name
         if account_name is not None:
             payload["sdr_odn"] = account_name
+
+        if system_version is not None:
+            payload["sdr_p"] = system_version
 
         for key, value in (user_opts or {}).items():
             payload[f"sdr_u.{key}"] = value
 
         for key, value in (account_opts or {}).items():
             payload[f"sdr_o.{key}"] = value
+
+        payload.update(raw_opts or {})
 
         return payload
 
@@ -94,16 +102,20 @@ class Totango:
         user_name: str | None = None,
         account_id: str | None = None,
         account_name: str | None = None,
+        system_version: str | None = None,
         user_opts: UserAttributes | None = None,
         account_opts: AccountAttributes | None = None,
+        raw_opts: RawAttributes | None = None,
     ) -> Response:
         payload = self._get_base_payload(
             user_id=user_id,
             user_name=user_name,
             account_id=account_id,
             account_name=account_name,
+            system_version=system_version,
             user_opts=user_opts,
             account_opts=account_opts,
+            raw_opts=raw_opts,
         )
         payload["sdr_m"] = module
         payload["sdr_a"] = action
@@ -116,16 +128,20 @@ class Totango:
         user_name: str | None = None,
         account_id: str | None = None,
         account_name: str | None = None,
+        system_version: str | None = None,
         user_opts: UserAttributes | None = None,
         account_opts: AccountAttributes | None = None,
+        raw_opts: RawAttributes | None = None,
     ) -> Response:
         payload = self._get_base_payload(
             user_id=user_id,
             user_name=user_name,
             account_id=account_id,
             account_name=account_name,
+            system_version=system_version,
             user_opts=user_opts,
             account_opts=account_opts,
+            raw_opts=raw_opts,
         )
 
         return self._post(payload)

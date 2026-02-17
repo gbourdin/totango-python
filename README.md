@@ -61,6 +61,26 @@ tracker.setAttributes(
 )
 ```
 
+## HTTP API Coverage Helpers
+
+The Totango HTTP API supports `sdr_p` (system version/build) and additional raw fields.
+
+```python
+import totango
+
+client = totango.Totango("SP-XXXX-XX", user_id="user-123", user_name="Jane User")
+
+client.track(
+    "dashboard",
+    "opened",
+    system_version="web@2026.02.17",
+    raw_opts={"sdr_custom_flag": "true"},
+)
+
+# If only account_name is provided, it is used for both sdr_o and sdr_odn
+client.send(account_name="Acme Inc")
+```
+
 ## Development
 
 Run tests:

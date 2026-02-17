@@ -2,6 +2,14 @@
 Changelog
 =========
 
+0.6.0 (2026-02-17)
+-----------------------------------------
+
+* Added ``system_version`` support (maps to ``sdr_p``).
+* Added ``raw_opts`` support for additional API fields.
+* Added fallback so ``account_name`` populates ``sdr_o`` when ``account_id`` is unset.
+* Added integration tests covering the above API-documented payload fields.
+
 0.5.0 (2026-02-17)
 -----------------------------------------
 
