@@ -1,5 +1,11 @@
 # totango-python
 
+[![PyPI Version](https://img.shields.io/pypi/v/totango)](https://pypi.org/project/totango/)
+[![PyPI License](https://img.shields.io/pypi/l/totango)](https://pypi.org/project/totango/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/totango)](https://pypi.org/project/totango/)
+[![CI](https://github.com/gbourdin/totango-python/actions/workflows/ci.yml/badge.svg)](https://github.com/gbourdin/totango-python/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/gbourdin/totango-python/graph/badge.svg?branch=master)](https://codecov.io/gh/gbourdin/totango-python)
+
 Python client for Totango's HTTP tracking pixel API.
 
 ## Requirements
