@@ -57,11 +57,8 @@ jobs:
     name: Publish to PyPI
     needs: create-release
     runs-on: ubuntu-latest
-    env:
-      PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
     permissions:
       contents: read
-      id-token: write
     environment:
       name: pypi
       url: https://pypi.org/p/totango
@@ -73,15 +70,8 @@ jobs:
           name: dist-${{ github.ref_name }}
           path: dist
 
-      - name: Publish with Trusted Publishing
-        if: ${{ env.PYPI_API_TOKEN == '' }}
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: dist
-
       - name: Publish with API token
-        if: ${{ env.PYPI_API_TOKEN != '' }}
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist
-          password: ${{ env.PYPI_API_TOKEN }}
+          password: ${{ secrets.PYPI_API_TOKEN }}
