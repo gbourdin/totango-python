@@ -45,6 +45,7 @@ output/*/index.html
 
 # Sphinx
 docs/_build
+docs/plans/
 
 .DS_Store
 *~

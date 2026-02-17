@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "totango"
+dynamic = ["version"]
+description = "Totango Python tracking client"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  { name = "German Bourdin", email = "admin@gbourdin.com" }
+]
+license = { text = "Apache-2.0" }
+keywords = ["totango", "tracking", "analytics"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
+  "Topic :: Internet",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+  "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "ruff>=0.6.0",
+  "setuptools>=69",
+  "tox>=4.21.0",
+  "ty>=0.0.1a15",
+]
+
+[project.urls]
+Homepage = "https://github.com/gbourdin/totango-python"
+Repository = "https://github.com/gbourdin/totango-python"
+Issues = "https://github.com/gbourdin/totango-python/issues"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["totango*"]
+
+[tool.setuptools.dynamic]
+version = { attr = "totango.__version__" }
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+src = ["totango", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "A", "N"]
+
+[tool.ty.environment]
+python-version = "3.10"
+
+[tool.coverage.run]
+branch = true
+source = ["totango"]
+
+[tool.coverage.report]
+show_missing = true

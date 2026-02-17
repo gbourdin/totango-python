@@ -2,6 +2,19 @@
 Changelog
 =========
 
+0.4.0 (2026-02-17)
+-----------------------------------------
+
+* Added official support for Python 3.10+ (through 3.15 in CI matrix validation).
+* Migrated packaging metadata to ``pyproject.toml`` with modern build configuration.
+* Added Python 3 compatibility fixes and typed public APIs.
+* Fixed payload construction for per-call ``user_id`` overrides.
+* Added behavior-focused integration tests for payload generation and HTTP error handling.
+* Added ``ruff`` and ``ty`` configuration and aligned tooling to Python 3.10 compatibility.
+* Added ``tox`` environments for Python 3.10 through 3.15 plus lint/type checks.
+* Added GitHub Actions CI matrix, coverage report generation, and Codecov uploads.
+* Added tag-triggered release workflow to create GitHub Releases and publish to PyPI.
+
 0.3.2 (2017-06-1)
 -----------------------------------------
 
