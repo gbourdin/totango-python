@@ -139,8 +139,18 @@ class TotangoTracker(Totango):
         service_id: str,
         region: str = "US",
         api_token: str | None = None,
+        user_id: str | None = None,
+        user_name: str | None = None,
+        account_id: str | None = None,
+        account_name: str | None = None,
     ) -> None:
-        super().__init__(service_id=service_id)
+        super().__init__(
+            service_id=service_id,
+            user_id=user_id,
+            user_name=user_name,
+            account_id=account_id,
+            account_name=account_name,
+        )
         normalized_region = region.upper()
         if normalized_region not in REGION_ENDPOINTS:
             raise ValueError("region must be 'US' or 'EU'")
@@ -156,56 +166,56 @@ class TotangoTracker(Totango):
             headers["X-API-Token"] = self.api_token
         return headers
 
-    def trackActivity(
+    def track_activity(
         self,
         module: str,
         action: str,
-        userName: str,
-        accountName: str = "",
+        user_name: str,
+        account_name: str = "",
     ) -> Response:
-        account_name = accountName or None
+        account_name_value = account_name or None
         return self.track(
             module=module,
             action=action,
-            user_id=userName,
-            user_name=userName,
-            account_name=account_name,
+            user_id=user_name,
+            user_name=user_name,
+            account_name=account_name_value,
         )
 
-    def setUserAttributes(
+    def set_user_attributes(
         self,
-        userId: str,
-        userName: str,
+        user_id: str,
+        user_name: str,
         attributes: UserAttributes,
     ) -> Response:
         return self.send(
-            user_id=userId,
-            user_name=userName,
+            user_id=user_id,
+            user_name=user_name,
             user_opts=attributes,
         )
 
-    def setAccountAttributes(
+    def set_account_attributes(
         self,
-        accountId: str,
-        accountName: str,
+        account_id: str,
+        account_name: str,
         attributes: AccountAttributes,
     ) -> Response:
-        user_id = self.user_id or accountId
+        user_id = self.user_id or account_id
         user_name = self.user_name or user_id
         return self.send(
             user_id=user_id,
             user_name=user_name,
-            account_id=accountId,
-            account_name=accountName,
+            account_id=account_id,
+            account_name=account_name,
             account_opts=attributes,
         )
 
-    def setAttributes(
+    def set_attributes(
         self,
-        accountId: str,
-        accountName: str,
-        userId: str,
-        userName: str,
+        account_id: str,
+        account_name: str,
+        user_id: str,
+        user_name: str,
         attributes: Attributes,
     ) -> Response:
         user_opts: dict[str, Any] = {}
@@ -220,45 +230,10 @@ class TotangoTracker(Totango):
                 user_opts[key] = value
 
         return self.send(
-            user_id=userId,
-            user_name=userName,
-            account_id=accountId,
-            account_name=accountName,
+            user_id=user_id,
+            user_name=user_name,
+            account_id=account_id,
+            account_name=account_name,
             user_opts=user_opts,
             account_opts=account_opts,
         )
-
-    def track_activity(
-        self,
-        module: str,
-        action: str,
-        user_name: str,
-        account_name: str = "",
-    ) -> Response:
-        return self.trackActivity(module, action, user_name, account_name)
-
-    def set_user_attributes(
-        self,
-        user_id: str,
-        user_name: str,
-        attributes: UserAttributes,
-    ) -> Response:
-        return self.setUserAttributes(user_id, user_name, attributes)
-
-    def set_account_attributes(
-        self,
-        account_id: str,
-        account_name: str,
-        attributes: AccountAttributes,
-    ) -> Response:
-        return self.setAccountAttributes(account_id, account_name, attributes)
-
-    def set_attributes(
-        self,
-        account_id: str,
-        account_name: str,
-        user_id: str,
-        user_name: str,
-        attributes: Attributes,
-    ) -> Response:
-        return self.setAttributes(account_id, account_name, user_id, user_name, attributes)

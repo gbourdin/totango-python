@@ -56,18 +56,25 @@ tt.track("dashboard", "opened", user_opts={"plan": "gold"})
 tt.send(account_opts={"tier": "enterprise"})
 ```
 
-## JS-Style Tracker API
+## Tracker API (JS Feature Parity, Python Naming)
 
-`TotangoTracker` mirrors the JavaScript `totango-tracker` API shape.
+`TotangoTracker` provides feature parity with the JavaScript tracker while keeping
+Python-style naming and signatures.
 
 ```python
 import totango
 
-tracker = totango.TotangoTracker("SP-XXXX-XX", "EU", "api-token-value")
-tracker.trackActivity("billing", "opened", "user@example.com", "Acme")
-tracker.setUserAttributes("user-1", "Jane User", {"plan": "enterprise"})
-tracker.setAccountAttributes("acct-1", "Acme", {"tier": "gold"})
-tracker.setAttributes(
+tracker = totango.TotangoTracker(
+    "SP-XXXX-XX",
+    region="EU",
+    api_token="api-token-value",
+    user_id="user-1",
+    user_name="Jane User",
+)
+tracker.track_activity("billing", "opened", "user@example.com", "Acme")
+tracker.set_user_attributes("user-1", "Jane User", {"plan": "enterprise"})
+tracker.set_account_attributes("acct-1", "Acme", {"tier": "gold"})
+tracker.set_attributes(
     "acct-1",
     "Acme",
     "user-1",

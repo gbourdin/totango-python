@@ -5,10 +5,10 @@ Changelog
 0.5.0 (2026-02-17)
 -----------------------------------------
 
-* Added ``TotangoTracker`` with JS tracker-style methods.
+* Added ``TotangoTracker`` with JS feature parity using Pythonic method names.
 * Added US/EU region endpoint selection.
 * Added optional API token headers for tracker requests.
-* Added behavior tests for JS parity method mapping.
+* Added behavior tests for tracker parity mapping and constructor defaults.
 
 0.4.0 (2026-02-17)
 -----------------------------------------

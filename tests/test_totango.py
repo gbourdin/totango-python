@@ -124,19 +124,19 @@ class TotangoBehaviorTests(unittest.TestCase):
 
 class TotangoTrackerParityTests(unittest.TestCase):
     def test_eu_region_uses_eu_endpoint(self) -> None:
-        tracker = totango.TotangoTracker("SP-123", "EU")
+        tracker = totango.TotangoTracker("SP-123", region="EU")
         self.assertEqual(tracker.url, "https://api-eu1.totango.com/pixel.gif/")
 
     def test_invalid_region_raises_value_error(self) -> None:
         with self.assertRaises(ValueError):
-            totango.TotangoTracker("SP-123", "APAC")
+            totango.TotangoTracker("SP-123", region="APAC")
 
     def test_track_activity_maps_to_event_payload(self) -> None:
         with _running_server() as (server, url):
             tracker = totango.TotangoTracker("SP-123")
             tracker.url = url
 
-            response = tracker.trackActivity("billing", "opened", "user@example.com", "Acme")
+            response = tracker.track_activity("billing", "opened", "user@example.com", "Acme")
 
         self.assertEqual(response.status_code, 200)
         payload = server.requests_log[0]["form"]
@@ -148,9 +148,9 @@ class TotangoTrackerParityTests(unittest.TestCase):
 
     def test_api_token_sets_auth_headers(self) -> None:
         with _running_server() as (server, url):
-            tracker = totango.TotangoTracker("SP-123", "US", "token-123")
+            tracker = totango.TotangoTracker("SP-123", api_token="token-123")
             tracker.url = url
-            tracker.trackActivity("billing", "opened", "user@example.com")
+            tracker.track_activity("billing", "opened", "user@example.com")
 
         headers = server.requests_log[0]["headers"]
         self.assertEqual(headers["Authorization"], "app-token token-123")
@@ -161,7 +161,7 @@ class TotangoTrackerParityTests(unittest.TestCase):
             tracker = totango.TotangoTracker("SP-123")
             tracker.url = url
 
-            tracker.setUserAttributes(
+            tracker.set_user_attributes(
                 "user-1",
                 "Jane User",
                 {"plan": "enterprise", "role": "admin"},
@@ -178,7 +178,7 @@ class TotangoTrackerParityTests(unittest.TestCase):
             tracker = totango.TotangoTracker("SP-123")
             tracker.url = url
 
-            tracker.setAttributes(
+            tracker.set_attributes(
                 "account-1",
                 "Acme",
                 "user-1",
@@ -206,7 +206,7 @@ class TotangoTrackerParityTests(unittest.TestCase):
             tracker = totango.TotangoTracker("SP-123")
             tracker.url = url
 
-            tracker.setAccountAttributes("account-1", "Acme", {"tier": "enterprise"})
+            tracker.set_account_attributes("account-1", "Acme", {"tier": "enterprise"})
 
         payload = server.requests_log[0]["form"]
         self.assertEqual(payload["sdr_u"], "account-1")
@@ -222,7 +222,7 @@ class TotangoTrackerParityTests(unittest.TestCase):
             tracker.user_id = "user-1"
             tracker.user_name = "Jane User"
 
-            tracker.setAccountAttributes("account-1", "Acme", {"tier": "enterprise"})
+            tracker.set_account_attributes("account-1", "Acme", {"tier": "enterprise"})
 
         payload = server.requests_log[0]["form"]
         self.assertEqual(payload["sdr_u"], "user-1")
@@ -236,7 +236,7 @@ class TotangoTrackerParityTests(unittest.TestCase):
             tracker = totango.TotangoTracker("SP-123")
             tracker.url = url
 
-            tracker.setAttributes(
+            tracker.set_attributes(
                 "account-1",
                 "Acme",
                 "user-1",
@@ -248,61 +248,31 @@ class TotangoTrackerParityTests(unittest.TestCase):
         self.assertEqual(payload["sdr_u.plan"], "gold")
         self.assertEqual(payload["sdr_o.segment"], "saas")
 
-    def test_track_activity_snake_case_alias(self) -> None:
+    def test_tracker_constructor_supports_default_identity_fields(self) -> None:
         with _running_server() as (server, url):
-            tracker = totango.TotangoTracker("SP-123")
+            tracker = totango.TotangoTracker(
+                "SP-123",
+                user_id="user-1",
+                user_name="Jane User",
+                account_id="account-1",
+                account_name="Acme",
+            )
             tracker.url = url
 
-            tracker.track_activity("billing", "opened", "user@example.com", "Acme")
-
-        payload = server.requests_log[0]["form"]
-        self.assertEqual(payload["sdr_m"], "billing")
-        self.assertEqual(payload["sdr_a"], "opened")
-        self.assertEqual(payload["sdr_u"], "user@example.com")
-        self.assertEqual(payload["sdr_odn"], "Acme")
-
-    def test_set_user_attributes_snake_case_alias(self) -> None:
-        with _running_server() as (server, url):
-            tracker = totango.TotangoTracker("SP-123")
-            tracker.url = url
-
-            tracker.set_user_attributes("user-1", "Jane User", {"plan": "enterprise"})
+            tracker.send()
 
         payload = server.requests_log[0]["form"]
         self.assertEqual(payload["sdr_u"], "user-1")
         self.assertEqual(payload["sdr_u.name"], "Jane User")
-        self.assertEqual(payload["sdr_u.plan"], "enterprise")
-
-    def test_set_account_attributes_snake_case_alias(self) -> None:
-        with _running_server() as (server, url):
-            tracker = totango.TotangoTracker("SP-123")
-            tracker.url = url
-
-            tracker.set_account_attributes("account-1", "Acme", {"tier": "enterprise"})
-
-        payload = server.requests_log[0]["form"]
-        self.assertEqual(payload["sdr_u"], "account-1")
-        self.assertEqual(payload["sdr_u.name"], "account-1")
         self.assertEqual(payload["sdr_o"], "account-1")
         self.assertEqual(payload["sdr_odn"], "Acme")
-        self.assertEqual(payload["sdr_o.tier"], "enterprise")
 
-    def test_set_attributes_snake_case_alias(self) -> None:
-        with _running_server() as (server, url):
-            tracker = totango.TotangoTracker("SP-123")
-            tracker.url = url
-
-            tracker.set_attributes(
-                "account-1",
-                "Acme",
-                "user-1",
-                "Jane User",
-                {"a.tier": "enterprise", "u.plan": "gold"},
-            )
-
-        payload = server.requests_log[0]["form"]
-        self.assertEqual(payload["sdr_o.tier"], "enterprise")
-        self.assertEqual(payload["sdr_u.plan"], "gold")
+    def test_tracker_does_not_expose_camel_case_methods(self) -> None:
+        tracker = totango.TotangoTracker("SP-123")
+        self.assertFalse(hasattr(tracker, "trackActivity"))
+        self.assertFalse(hasattr(tracker, "setUserAttributes"))
+        self.assertFalse(hasattr(tracker, "setAccountAttributes"))
+        self.assertFalse(hasattr(tracker, "setAttributes"))
 
 
 if __name__ == "__main__":
