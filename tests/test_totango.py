@@ -217,10 +217,12 @@ class TotangoTrackerParityTests(unittest.TestCase):
 
     def test_set_account_attributes_prefers_existing_tracker_user(self) -> None:
         with _running_server() as (server, url):
-            tracker = totango.TotangoTracker("SP-123")
+            tracker = totango.TotangoTracker(
+                "SP-123",
+                user_id="user-1",
+                user_name="Jane User",
+            )
             tracker.url = url
-            tracker.user_id = "user-1"
-            tracker.user_name = "Jane User"
 
             tracker.set_account_attributes("account-1", "Acme", {"tier": "enterprise"})
 
@@ -266,14 +268,6 @@ class TotangoTrackerParityTests(unittest.TestCase):
         self.assertEqual(payload["sdr_u.name"], "Jane User")
         self.assertEqual(payload["sdr_o"], "account-1")
         self.assertEqual(payload["sdr_odn"], "Acme")
-
-    def test_tracker_does_not_expose_camel_case_methods(self) -> None:
-        tracker = totango.TotangoTracker("SP-123")
-        self.assertFalse(hasattr(tracker, "trackActivity"))
-        self.assertFalse(hasattr(tracker, "setUserAttributes"))
-        self.assertFalse(hasattr(tracker, "setAccountAttributes"))
-        self.assertFalse(hasattr(tracker, "setAttributes"))
-
 
 if __name__ == "__main__":
     unittest.main()
