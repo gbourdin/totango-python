@@ -2,6 +2,12 @@
 Changelog
 =========
 
+0.4.1 (2026-02-19)
+-----------------------------------------
+
+* Changed the default tracking pixel endpoint to ``https://sdr.totango.com/pixel.gif/``.
+* Added regression coverage for HTTPS default endpoint selection.
+
 0.4.0 (2026-02-17)
 -----------------------------------------
 

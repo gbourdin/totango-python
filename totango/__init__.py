@@ -6,7 +6,7 @@ from typing import Any
 import requests
 from requests import Response
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 
 UserAttributes = Mapping[str, Any]
 AccountAttributes = Mapping[str, Any]
@@ -23,7 +23,7 @@ class Totango:
         account_id: str | None = None,
         account_name: str | None = None,
     ) -> None:
-        self.url = "http://sdr.totango.com/pixel.gif/"
+        self.url = "https://sdr.totango.com/pixel.gif/"
         self.service_id = service_id
         self.account_id = account_id
         self.account_name = account_name
