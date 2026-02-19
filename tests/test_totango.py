@@ -60,6 +60,10 @@ def _running_server(*, response_statuses: list[int] | None = None):
 
 
 class TotangoBehaviorTests(unittest.TestCase):
+    def test_default_endpoint_uses_https(self) -> None:
+        client = totango.Totango("SP-123", user_id="user-1")
+        self.assertEqual(client.url, "https://sdr.totango.com/pixel.gif/")
+
     def test_track_posts_expected_payload(self) -> None:
         with _running_server() as (server, url):
             client = totango.Totango(
