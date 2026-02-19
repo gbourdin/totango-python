@@ -60,6 +60,7 @@ tt.send(account_opts={"tier": "enterprise"})
 
 Feature parity with the JavaScript tracker is available on `Totango` directly,
 while preserving the existing constructor and methods.
+When `region` is set, `api_token` is required.
 
 ```python
 import totango

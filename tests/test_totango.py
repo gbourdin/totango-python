@@ -60,6 +60,10 @@ def _running_server(*, response_statuses: list[int] | None = None):
 
 
 class TotangoBehaviorTests(unittest.TestCase):
+    def test_default_endpoint_uses_https(self) -> None:
+        client = totango.Totango("SP-123", user_id="user-1")
+        self.assertEqual(client.url, "https://sdr.totango.com/pixel.gif/")
+
     def test_track_activity_posts_expected_payload(self) -> None:
         with _running_server() as (server, url):
             client = totango.Totango(
@@ -101,7 +105,10 @@ class TotangoBehaviorTests(unittest.TestCase):
             client = totango.Totango("SP-123", user_id="default-user")
             client.url = url
 
-            with self.assertWarns(DeprecationWarning):
+            with self.assertWarnsRegex(
+                DeprecationWarning,
+                r"track\(\) will be deprecated in a future release, use track_activity\(\) instead",
+            ):
                 response = client.track("module-a", "action-b", user_id="override-user")
 
         self.assertEqual(response.status_code, 200)
@@ -125,12 +132,16 @@ class TotangoBehaviorTests(unittest.TestCase):
 
 class TotangoParityMethodsTests(unittest.TestCase):
     def test_eu_region_uses_eu_endpoint(self) -> None:
-        client = totango.Totango("SP-123", region="EU")
+        client = totango.Totango("SP-123", region="EU", api_token="token-123")
         self.assertEqual(client.url, "https://api-eu1.totango.com/pixel.gif/")
 
     def test_invalid_region_raises_value_error(self) -> None:
         with self.assertRaises(ValueError):
             totango.Totango("SP-123", region="APAC")
+
+    def test_region_requires_api_token(self) -> None:
+        with self.assertRaises(ValueError):
+            totango.Totango("SP-123", region="EU")
 
     def test_track_activity_maps_to_event_payload(self) -> None:
         with _running_server() as (server, url):

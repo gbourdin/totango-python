@@ -33,12 +33,14 @@ class Totango:
         api_token: str | None = None,
     ) -> None:
         if region is None:
-            self.url = "http://sdr.totango.com/pixel.gif/"
+            self.url = "https://sdr.totango.com/pixel.gif/"
             self.region: str | None = None
         else:
             normalized_region = region.upper()
             if normalized_region not in REGION_ENDPOINTS:
                 raise ValueError("region must be 'US' or 'EU'")
+            if api_token is None:
+                raise ValueError("api_token is required when region is set")
             self.region = normalized_region
             self.url = REGION_ENDPOINTS[normalized_region]
 
@@ -115,7 +117,7 @@ class Totango:
         account_opts: AccountAttributes | None = None,
     ) -> Response:
         warnings.warn(
-            "track() is deprecated; use track_activity() instead",
+            "track() will be deprecated in a future release, use track_activity() instead",
             DeprecationWarning,
             stacklevel=2,
         )

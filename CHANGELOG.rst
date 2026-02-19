@@ -8,6 +8,8 @@ Changelog
 * Added JS tracker parity methods directly on ``Totango``.
 * Added US/EU region endpoint selection.
 * Added optional API token headers for tracker requests.
+* Defaulted the legacy endpoint URL to HTTPS.
+* Require ``api_token`` when using region-specific endpoints.
 * Added ``track_activity`` and deprecated ``track``.
 * Added behavior tests for tracker parity mapping and constructor defaults.
 
