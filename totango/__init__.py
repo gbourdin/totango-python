@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from collections.abc import Mapping
 from typing import Any
 
@@ -28,13 +29,25 @@ class Totango:
         user_name: str | None = None,
         account_id: str | None = None,
         account_name: str | None = None,
+        region: str | None = None,
+        api_token: str | None = None,
     ) -> None:
-        self.url = "http://sdr.totango.com/pixel.gif/"
+        if region is None:
+            self.url = "http://sdr.totango.com/pixel.gif/"
+            self.region: str | None = None
+        else:
+            normalized_region = region.upper()
+            if normalized_region not in REGION_ENDPOINTS:
+                raise ValueError("region must be 'US' or 'EU'")
+            self.region = normalized_region
+            self.url = REGION_ENDPOINTS[normalized_region]
+
         self.service_id = service_id
         self.account_id = account_id
         self.account_name = account_name
         self.user_id = user_id
         self.user_name = user_name
+        self.api_token = api_token
 
     def _get_base_payload(
         self,
@@ -75,7 +88,11 @@ class Totango:
         return payload
 
     def _get_headers(self) -> dict[str, str]:
-        return {"User-Agent": f"python-totango/{__version__}"}
+        headers = {"User-Agent": f"python-totango/{__version__}"}
+        if self.api_token:
+            headers["Authorization"] = f"app-token {self.api_token}"
+            headers["X-API-Token"] = self.api_token
+        return headers
 
     def _post(self, payload: Mapping[str, Any]) -> Response:
         response = requests.post(
@@ -87,6 +104,33 @@ class Totango:
         return response
 
     def track(
+        self,
+        module: str,
+        action: str,
+        user_id: str | None = None,
+        user_name: str | None = None,
+        account_id: str | None = None,
+        account_name: str | None = None,
+        user_opts: UserAttributes | None = None,
+        account_opts: AccountAttributes | None = None,
+    ) -> Response:
+        warnings.warn(
+            "track() is deprecated; use track_activity() instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.track_activity(
+            module=module,
+            action=action,
+            user_id=user_id,
+            user_name=user_name,
+            account_id=account_id,
+            account_name=account_name,
+            user_opts=user_opts,
+            account_opts=account_opts,
+        )
+
+    def track_activity(
         self,
         module: str,
         action: str,
@@ -129,58 +173,6 @@ class Totango:
         )
 
         return self._post(payload)
-
-
-class TotangoTracker(Totango):
-    """Feature-compatible tracker API aligned with the JS totango-tracker package."""
-
-    def __init__(
-        self,
-        service_id: str,
-        region: str = "US",
-        api_token: str | None = None,
-        user_id: str | None = None,
-        user_name: str | None = None,
-        account_id: str | None = None,
-        account_name: str | None = None,
-    ) -> None:
-        super().__init__(
-            service_id=service_id,
-            user_id=user_id,
-            user_name=user_name,
-            account_id=account_id,
-            account_name=account_name,
-        )
-        normalized_region = region.upper()
-        if normalized_region not in REGION_ENDPOINTS:
-            raise ValueError("region must be 'US' or 'EU'")
-
-        self.region = normalized_region
-        self.url = REGION_ENDPOINTS[normalized_region]
-        self.api_token = api_token
-
-    def _get_headers(self) -> dict[str, str]:
-        headers = super()._get_headers()
-        if self.api_token:
-            headers["Authorization"] = f"app-token {self.api_token}"
-            headers["X-API-Token"] = self.api_token
-        return headers
-
-    def track_activity(
-        self,
-        module: str,
-        action: str,
-        user_name: str,
-        account_name: str = "",
-    ) -> Response:
-        account_name_value = account_name or None
-        return self.track(
-            module=module,
-            action=action,
-            user_id=user_name,
-            user_name=user_name,
-            account_name=account_name_value,
-        )
 
     def set_user_attributes(
         self,

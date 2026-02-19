@@ -60,7 +60,7 @@ def _running_server(*, response_statuses: list[int] | None = None):
 
 
 class TotangoBehaviorTests(unittest.TestCase):
-    def test_track_posts_expected_payload(self) -> None:
+    def test_track_activity_posts_expected_payload(self) -> None:
         with _running_server() as (server, url):
             client = totango.Totango(
                 "SP-123",
@@ -71,7 +71,7 @@ class TotangoBehaviorTests(unittest.TestCase):
             )
             client.url = url
 
-            response = client.track(
+            response = client.track_activity(
                 "module-a",
                 "action-b",
                 user_opts={"plan": "gold"},
@@ -96,12 +96,13 @@ class TotangoBehaviorTests(unittest.TestCase):
         self.assertEqual(payload["sdr_u.plan"], "gold")
         self.assertEqual(payload["sdr_o.tier"], "enterprise")
 
-    def test_track_user_id_argument_overrides_default_user(self) -> None:
+    def test_track_warns_and_user_id_argument_overrides_default_user(self) -> None:
         with _running_server() as (server, url):
             client = totango.Totango("SP-123", user_id="default-user")
             client.url = url
 
-            response = client.track("module-a", "action-b", user_id="override-user")
+            with self.assertWarns(DeprecationWarning):
+                response = client.track("module-a", "action-b", user_id="override-user")
 
         self.assertEqual(response.status_code, 200)
         payload = server.requests_log[0]["form"]
@@ -122,21 +123,27 @@ class TotangoBehaviorTests(unittest.TestCase):
                 client.send()
 
 
-class TotangoTrackerParityTests(unittest.TestCase):
+class TotangoParityMethodsTests(unittest.TestCase):
     def test_eu_region_uses_eu_endpoint(self) -> None:
-        tracker = totango.TotangoTracker("SP-123", region="EU")
-        self.assertEqual(tracker.url, "https://api-eu1.totango.com/pixel.gif/")
+        client = totango.Totango("SP-123", region="EU")
+        self.assertEqual(client.url, "https://api-eu1.totango.com/pixel.gif/")
 
     def test_invalid_region_raises_value_error(self) -> None:
         with self.assertRaises(ValueError):
-            totango.TotangoTracker("SP-123", region="APAC")
+            totango.Totango("SP-123", region="APAC")
 
     def test_track_activity_maps_to_event_payload(self) -> None:
         with _running_server() as (server, url):
-            tracker = totango.TotangoTracker("SP-123")
-            tracker.url = url
+            client = totango.Totango("SP-123")
+            client.url = url
 
-            response = tracker.track_activity("billing", "opened", "user@example.com", "Acme")
+            response = client.track_activity(
+                "billing",
+                "opened",
+                user_id="user@example.com",
+                user_name="user@example.com",
+                account_name="Acme",
+            )
 
         self.assertEqual(response.status_code, 200)
         payload = server.requests_log[0]["form"]
@@ -148,9 +155,9 @@ class TotangoTrackerParityTests(unittest.TestCase):
 
     def test_api_token_sets_auth_headers(self) -> None:
         with _running_server() as (server, url):
-            tracker = totango.TotangoTracker("SP-123", api_token="token-123")
-            tracker.url = url
-            tracker.track_activity("billing", "opened", "user@example.com")
+            client = totango.Totango("SP-123", user_id="user-1", api_token="token-123")
+            client.url = url
+            client.send()
 
         headers = server.requests_log[0]["headers"]
         self.assertEqual(headers["Authorization"], "app-token token-123")
@@ -158,10 +165,10 @@ class TotangoTrackerParityTests(unittest.TestCase):
 
     def test_set_user_attributes(self) -> None:
         with _running_server() as (server, url):
-            tracker = totango.TotangoTracker("SP-123")
-            tracker.url = url
+            client = totango.Totango("SP-123")
+            client.url = url
 
-            tracker.set_user_attributes(
+            client.set_user_attributes(
                 "user-1",
                 "Jane User",
                 {"plan": "enterprise", "role": "admin"},
@@ -175,10 +182,10 @@ class TotangoTrackerParityTests(unittest.TestCase):
 
     def test_set_attributes_splits_user_and_account_prefixes(self) -> None:
         with _running_server() as (server, url):
-            tracker = totango.TotangoTracker("SP-123")
-            tracker.url = url
+            client = totango.Totango("SP-123")
+            client.url = url
 
-            tracker.set_attributes(
+            client.set_attributes(
                 "account-1",
                 "Acme",
                 "user-1",
@@ -203,10 +210,10 @@ class TotangoTrackerParityTests(unittest.TestCase):
 
     def test_set_account_attributes_uses_account_as_fallback_user(self) -> None:
         with _running_server() as (server, url):
-            tracker = totango.TotangoTracker("SP-123")
-            tracker.url = url
+            client = totango.Totango("SP-123")
+            client.url = url
 
-            tracker.set_account_attributes("account-1", "Acme", {"tier": "enterprise"})
+            client.set_account_attributes("account-1", "Acme", {"tier": "enterprise"})
 
         payload = server.requests_log[0]["form"]
         self.assertEqual(payload["sdr_u"], "account-1")
@@ -217,14 +224,14 @@ class TotangoTrackerParityTests(unittest.TestCase):
 
     def test_set_account_attributes_prefers_existing_tracker_user(self) -> None:
         with _running_server() as (server, url):
-            tracker = totango.TotangoTracker(
+            client = totango.Totango(
                 "SP-123",
                 user_id="user-1",
                 user_name="Jane User",
             )
-            tracker.url = url
+            client.url = url
 
-            tracker.set_account_attributes("account-1", "Acme", {"tier": "enterprise"})
+            client.set_account_attributes("account-1", "Acme", {"tier": "enterprise"})
 
         payload = server.requests_log[0]["form"]
         self.assertEqual(payload["sdr_u"], "user-1")
@@ -235,10 +242,10 @@ class TotangoTrackerParityTests(unittest.TestCase):
 
     def test_set_attributes_without_prefix_defaults_to_user(self) -> None:
         with _running_server() as (server, url):
-            tracker = totango.TotangoTracker("SP-123")
-            tracker.url = url
+            client = totango.Totango("SP-123")
+            client.url = url
 
-            tracker.set_attributes(
+            client.set_attributes(
                 "account-1",
                 "Acme",
                 "user-1",
@@ -250,18 +257,18 @@ class TotangoTrackerParityTests(unittest.TestCase):
         self.assertEqual(payload["sdr_u.plan"], "gold")
         self.assertEqual(payload["sdr_o.segment"], "saas")
 
-    def test_tracker_constructor_supports_default_identity_fields(self) -> None:
+    def test_constructor_supports_default_identity_fields(self) -> None:
         with _running_server() as (server, url):
-            tracker = totango.TotangoTracker(
+            client = totango.Totango(
                 "SP-123",
                 user_id="user-1",
                 user_name="Jane User",
                 account_id="account-1",
                 account_name="Acme",
             )
-            tracker.url = url
+            client.url = url
 
-            tracker.send()
+            client.send()
 
         payload = server.requests_log[0]["form"]
         self.assertEqual(payload["sdr_u"], "user-1")
