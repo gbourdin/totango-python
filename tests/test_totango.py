@@ -60,7 +60,11 @@ def _running_server(*, response_statuses: list[int] | None = None):
 
 
 class TotangoBehaviorTests(unittest.TestCase):
-    def test_track_posts_expected_payload(self) -> None:
+    def test_default_endpoint_uses_https(self) -> None:
+        client = totango.Totango("SP-123", user_id="user-1")
+        self.assertEqual(client.url, "https://sdr.totango.com/pixel.gif/")
+
+    def test_track_activity_posts_expected_payload(self) -> None:
         with _running_server() as (server, url):
             client = totango.Totango(
                 "SP-123",
@@ -71,7 +75,7 @@ class TotangoBehaviorTests(unittest.TestCase):
             )
             client.url = url
 
-            response = client.track(
+            response = client.track_activity(
                 "module-a",
                 "action-b",
                 user_opts={"plan": "gold"},
@@ -96,12 +100,16 @@ class TotangoBehaviorTests(unittest.TestCase):
         self.assertEqual(payload["sdr_u.plan"], "gold")
         self.assertEqual(payload["sdr_o.tier"], "enterprise")
 
-    def test_track_user_id_argument_overrides_default_user(self) -> None:
+    def test_track_warns_and_user_id_argument_overrides_default_user(self) -> None:
         with _running_server() as (server, url):
             client = totango.Totango("SP-123", user_id="default-user")
             client.url = url
 
-            response = client.track("module-a", "action-b", user_id="override-user")
+            with self.assertWarnsRegex(
+                DeprecationWarning,
+                r"track\(\) will be deprecated in a future release, use track_activity\(\) instead",
+            ):
+                response = client.track("module-a", "action-b", user_id="override-user")
 
         self.assertEqual(response.status_code, 200)
         payload = server.requests_log[0]["form"]
@@ -121,6 +129,163 @@ class TotangoBehaviorTests(unittest.TestCase):
             with self.assertRaises(requests.HTTPError):
                 client.send()
 
+
+class TotangoParityMethodsTests(unittest.TestCase):
+    def test_eu_region_uses_eu_endpoint(self) -> None:
+        client = totango.Totango("SP-123", region="EU", api_token="token-123")
+        self.assertEqual(client.url, "https://api-eu1.totango.com/pixel.gif/")
+
+    def test_invalid_region_raises_value_error(self) -> None:
+        with self.assertRaises(ValueError):
+            totango.Totango("SP-123", region="APAC")
+
+    def test_region_requires_api_token(self) -> None:
+        with self.assertRaises(ValueError):
+            totango.Totango("SP-123", region="EU")
+
+    def test_track_activity_maps_to_event_payload(self) -> None:
+        with _running_server() as (server, url):
+            client = totango.Totango("SP-123")
+            client.url = url
+
+            response = client.track_activity(
+                "billing",
+                "opened",
+                user_id="user@example.com",
+                user_name="user@example.com",
+                account_name="Acme",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        payload = server.requests_log[0]["form"]
+        self.assertEqual(payload["sdr_m"], "billing")
+        self.assertEqual(payload["sdr_a"], "opened")
+        self.assertEqual(payload["sdr_u"], "user@example.com")
+        self.assertEqual(payload["sdr_u.name"], "user@example.com")
+        self.assertEqual(payload["sdr_odn"], "Acme")
+
+    def test_api_token_sets_auth_headers(self) -> None:
+        with _running_server() as (server, url):
+            client = totango.Totango("SP-123", user_id="user-1", api_token="token-123")
+            client.url = url
+            client.send()
+
+        headers = server.requests_log[0]["headers"]
+        self.assertEqual(headers["Authorization"], "app-token token-123")
+        self.assertEqual(headers["X-API-Token"], "token-123")
+
+    def test_set_user_attributes(self) -> None:
+        with _running_server() as (server, url):
+            client = totango.Totango("SP-123")
+            client.url = url
+
+            client.set_user_attributes(
+                "user-1",
+                "Jane User",
+                {"plan": "enterprise", "role": "admin"},
+            )
+
+        payload = server.requests_log[0]["form"]
+        self.assertEqual(payload["sdr_u"], "user-1")
+        self.assertEqual(payload["sdr_u.name"], "Jane User")
+        self.assertEqual(payload["sdr_u.plan"], "enterprise")
+        self.assertEqual(payload["sdr_u.role"], "admin")
+
+    def test_set_attributes_splits_user_and_account_prefixes(self) -> None:
+        with _running_server() as (server, url):
+            client = totango.Totango("SP-123")
+            client.url = url
+
+            client.set_attributes(
+                "account-1",
+                "Acme",
+                "user-1",
+                "Jane User",
+                {
+                    "a.tier": "enterprise",
+                    "a.segment": "financial-services",
+                    "u.plan": "gold",
+                    "u.mrr": "1200",
+                },
+            )
+
+        payload = server.requests_log[0]["form"]
+        self.assertEqual(payload["sdr_o"], "account-1")
+        self.assertEqual(payload["sdr_odn"], "Acme")
+        self.assertEqual(payload["sdr_u"], "user-1")
+        self.assertEqual(payload["sdr_u.name"], "Jane User")
+        self.assertEqual(payload["sdr_o.tier"], "enterprise")
+        self.assertEqual(payload["sdr_o.segment"], "financial-services")
+        self.assertEqual(payload["sdr_u.plan"], "gold")
+        self.assertEqual(payload["sdr_u.mrr"], "1200")
+
+    def test_set_account_attributes_uses_account_as_fallback_user(self) -> None:
+        with _running_server() as (server, url):
+            client = totango.Totango("SP-123")
+            client.url = url
+
+            client.set_account_attributes("account-1", "Acme", {"tier": "enterprise"})
+
+        payload = server.requests_log[0]["form"]
+        self.assertEqual(payload["sdr_u"], "account-1")
+        self.assertEqual(payload["sdr_u.name"], "account-1")
+        self.assertEqual(payload["sdr_o"], "account-1")
+        self.assertEqual(payload["sdr_odn"], "Acme")
+        self.assertEqual(payload["sdr_o.tier"], "enterprise")
+
+    def test_set_account_attributes_prefers_existing_tracker_user(self) -> None:
+        with _running_server() as (server, url):
+            client = totango.Totango(
+                "SP-123",
+                user_id="user-1",
+                user_name="Jane User",
+            )
+            client.url = url
+
+            client.set_account_attributes("account-1", "Acme", {"tier": "enterprise"})
+
+        payload = server.requests_log[0]["form"]
+        self.assertEqual(payload["sdr_u"], "user-1")
+        self.assertEqual(payload["sdr_u.name"], "Jane User")
+        self.assertEqual(payload["sdr_o"], "account-1")
+        self.assertEqual(payload["sdr_odn"], "Acme")
+        self.assertEqual(payload["sdr_o.tier"], "enterprise")
+
+    def test_set_attributes_without_prefix_defaults_to_user(self) -> None:
+        with _running_server() as (server, url):
+            client = totango.Totango("SP-123")
+            client.url = url
+
+            client.set_attributes(
+                "account-1",
+                "Acme",
+                "user-1",
+                "Jane User",
+                {"plan": "gold", "a.segment": "saas"},
+            )
+
+        payload = server.requests_log[0]["form"]
+        self.assertEqual(payload["sdr_u.plan"], "gold")
+        self.assertEqual(payload["sdr_o.segment"], "saas")
+
+    def test_constructor_supports_default_identity_fields(self) -> None:
+        with _running_server() as (server, url):
+            client = totango.Totango(
+                "SP-123",
+                user_id="user-1",
+                user_name="Jane User",
+                account_id="account-1",
+                account_name="Acme",
+            )
+            client.url = url
+
+            client.send()
+
+        payload = server.requests_log[0]["form"]
+        self.assertEqual(payload["sdr_u"], "user-1")
+        self.assertEqual(payload["sdr_u.name"], "Jane User")
+        self.assertEqual(payload["sdr_o"], "account-1")
+        self.assertEqual(payload["sdr_odn"], "Acme")
 
 if __name__ == "__main__":
     unittest.main()

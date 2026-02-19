@@ -33,7 +33,7 @@ pip install -e .
 import totango
 
 tt = totango.Totango("SP-XXXX-XX", user_id="user-123")
-tt.track("module", "action")
+tt.track_activity("module", "action")
 ```
 
 ## Usage
@@ -50,10 +50,41 @@ tt = totango.Totango(
 )
 
 # Track an activity event
-tt.track("dashboard", "opened", user_opts={"plan": "gold"})
+tt.track_activity("dashboard", "opened", user_opts={"plan": "gold"})
 
 # Send an identify-style update without activity module/action
 tt.send(account_opts={"tier": "enterprise"})
+```
+
+## Tracker API (Parity On `Totango`)
+
+Feature parity with the JavaScript tracker is available on `Totango` directly,
+while preserving the existing constructor and methods.
+When `region` is set, `api_token` is required.
+
+```python
+import totango
+
+tt = totango.Totango(
+    "SP-XXXX-XX",
+    region="EU",
+    api_token="api-token-value",
+    user_id="user-1",
+    user_name="Jane User",
+)
+tt.track_activity("billing", "opened", user_id="user@example.com", user_name="user@example.com")
+tt.set_user_attributes("user-1", "Jane User", {"plan": "enterprise"})
+tt.set_account_attributes("acct-1", "Acme", {"tier": "gold"})
+tt.set_attributes(
+    "acct-1",
+    "Acme",
+    "user-1",
+    "Jane User",
+    {"a.segment": "saas", "u.plan": "enterprise"},
+)
+
+# Legacy method (deprecated):
+# tt.track("billing", "opened", user_id="user@example.com", user_name="user@example.com")
 ```
 
 ## Development
